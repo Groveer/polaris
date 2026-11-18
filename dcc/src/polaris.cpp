@@ -1,6 +1,7 @@
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "polaris.h"
+#include "balanceconfig.h"
 
 #include "dccfactory.h"
 
@@ -17,6 +18,7 @@ const QString kShowSwapKey = QStringLiteral("showSwap");
 const QString kShowNetworkKey = QStringLiteral("showNetwork");
 const QString kShowPowerKey = QStringLiteral("showPower");
 const QString kShowFanKey = QStringLiteral("showFan");
+const QString kShowBalanceKey = QStringLiteral("showBalance");
 const QString kRefreshIntervalKey = QStringLiteral("refreshIntervalMs");
 const QString kProcessCountKey = QStringLiteral("processCount");
 const QString kFanScaleKey = QStringLiteral("fanScaleRpm");
@@ -32,6 +34,12 @@ constexpr int kProcessCountMax = 30;
 constexpr int kFanScaleMin = 500;
 constexpr int kFanScaleMax = 10000;
 const QStringList kChartModes{QStringLiteral("off"), QStringLiteral("both"), QStringLiteral("line")};
+
+QVariantMap publicBalanceConfig(const polaris::BalanceConfig &c)
+{
+    return {{"name", c.name}, {"url", c.url}, {"auth", c.auth}, {"path", c.path},
+            {"unit", c.unit}, {"minutes", c.minutes}, {"hasKey", !c.key.isEmpty()}};
+}
 } // namespace
 
 Polaris::Polaris(QObject *parent)
@@ -63,6 +71,7 @@ void Polaris::reload()
     m_showNetwork = configValue(kShowNetworkKey, true).toBool();
     m_showPower = configValue(kShowPowerKey, false).toBool();
     m_showFan = configValue(kShowFanKey, false).toBool();
+    m_showBalance = configValue(kShowBalanceKey, false).toBool();
     m_refreshIntervalMs = configValue(kRefreshIntervalKey, 2000).toInt();
     m_processCount = configValue(kProcessCountKey, 8).toInt();
     m_fanScaleRpm = configValue(kFanScaleKey, 3000).toInt();
@@ -76,6 +85,7 @@ void Polaris::reload()
     Q_EMIT showNetworkChanged(m_showNetwork);
     Q_EMIT showPowerChanged(m_showPower);
     Q_EMIT showFanChanged(m_showFan);
+    Q_EMIT showBalanceChanged(m_showBalance);
     Q_EMIT refreshIntervalMsChanged(m_refreshIntervalMs);
     Q_EMIT processCountChanged(m_processCount);
     Q_EMIT fanScaleRpmChanged(m_fanScaleRpm);
@@ -157,6 +167,42 @@ void Polaris::setShowPower(bool show)
 void Polaris::setShowFan(bool show)
 {
     writeConfig(kShowFanKey, show);
+}
+
+void Polaris::setShowBalance(bool show)
+{
+    if (m_showBalance != show)
+        writeConfig(kShowBalanceKey, show);
+}
+
+QVariantMap Polaris::balanceConfig() const
+{
+    return publicBalanceConfig(polaris::loadBalanceConfig());
+}
+
+QVariantMap Polaris::defaultBalanceConfig() const
+{
+    return publicBalanceConfig(polaris::BalanceConfig{});
+}
+
+QString Polaris::saveBalance(const QVariantMap &settings, const QString &key)
+{
+    polaris::BalanceConfig c;
+    c.name = settings.value("name").toString().trimmed();
+    c.url = settings.value("url").toString().trimmed();
+    c.auth = settings.value("auth").toString();
+    c.path = settings.value("path").toString().trimmed();
+    c.unit = settings.value("unit").toString().trimmed();
+    c.minutes = settings.value("minutes").toInt();
+    if (c.auth != QStringLiteral("none")) {
+        c.key = key.trimmed().toUtf8();
+        if (c.key.isEmpty()) {
+            const auto previous = polaris::loadBalanceConfig();
+            if (c.url == previous.url && c.auth == previous.auth)
+                c.key = previous.key;
+        }
+    }
+    return polaris::saveBalanceConfig(c);
 }
 
 void Polaris::setFanScaleRpm(int rpm)

@@ -20,7 +20,8 @@ file(GLOB_RECURSE PLUGIN_SRCS
     "src/*.h"
 )
 
-add_library(${PLUGIN_TARGET} MODULE ${PLUGIN_SRCS})
+add_library(${PLUGIN_TARGET} MODULE ${PLUGIN_SRCS} ../src/balanceconfig.cpp)
+target_include_directories(${PLUGIN_TARGET} PRIVATE ../src)
 
 target_link_libraries(${PLUGIN_TARGET} PRIVATE
     Dde::Control-Center

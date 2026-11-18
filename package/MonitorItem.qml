@@ -39,6 +39,8 @@ Item {
     property bool showNetwork: true
     property bool showPower: false
     property bool showFan: false
+    property bool showBalance: false
+    property var balance: ({})
 
     /// How every metric is drawn: "off" (the number alone), "both" (the number
     /// with its history under it) or "line" (the history with its label, no
@@ -161,6 +163,17 @@ Item {
                        + (powerSource.length > 0 ? " (" + powerSource + ")" : ""))
         if (showFan && fanMaximum > 0)
             lines.push(qsTr("Fan") + ": " + fanMaximum + " RPM")
+        if (showBalance) {
+            lines.push((balance.name || qsTr("API balance")) + ": " + (balance.balance || "--"))
+            if (balance.todayCost)
+                lines.push(qsTr("Today’s actual cost: %1").arg(balance.todayCost))
+            if (balance.todayRequests)
+                lines.push(qsTr("Today’s requests: %1").arg(balance.todayRequests))
+            if (balance.updated)
+                lines.push(qsTr("Last updated: %1").arg(balance.updated))
+            if (balance.status)
+                lines.push(balance.status)
+        }
         return lines.join("\n")
     }
 
@@ -168,7 +181,7 @@ Item {
     /// separator; horizontally a metric only needs one when something precedes
     /// it, so hiding the leading metrics does not leave a dangling separator.
     readonly property var metricVisibility: [showCpu, showTemperature, showMemory, showSwap,
-                                              showNetwork, showNetwork, showPower, showFan]
+                                              showNetwork, showNetwork, showPower, showFan, showBalance]
 
     readonly property int visibleCount: {
         let count = 0
@@ -218,6 +231,17 @@ Item {
     /// Vertical docks draw the compact form, which must line up with the other
     /// cells instead of being wider than the dock itself.
     readonly property real rateCellWidth: root.vertical ? root.valueWidth : root.rateWidth
+
+    TextMetrics {
+        id: balanceMetrics
+        font.pixelSize: root.fontSize
+        text: "−$888.88M"
+    }
+
+    FontMetrics {
+        id: balanceFont
+        font.pixelSize: root.fontSize
+    }
 
     implicitWidth: root.vertical ? root.dockSize : Math.round(content.implicitWidth + 12)
     implicitHeight: root.vertical ? Math.round(content.implicitHeight + 8) : root.dockSize
@@ -341,6 +365,18 @@ Item {
             values: root.fanHistory
             scaleMax: root.fanCeiling
         }
+        MetricGroup {
+            fontSize: root.fontSize
+            showSeparator: root.needsSeparator(8)
+            visible: root.showBalance
+            label: root.vertical ? "" : (root.balance.name || qsTr("API")) + " "
+            value: root.balance.compact || "--"
+            valueWidth: root.vertical ? Math.max(0, root.dockSize - 8)
+                                      : Math.ceil(balanceMetrics.advanceWidth)
+            valueColor: root.balance.status ? root.separatorColor : root.normalColor
+            separatorColor: root.separatorColor
+            fitValue: true
+        }
     }
 
     /// One metric: the separator, its label and its number on one line, with its
@@ -364,6 +400,7 @@ Item {
         property color separatorColor: "gray"
         property bool showChart: false
         property bool showValue: true
+        property bool fitValue: false
         property var values: []
         property real scaleMax: 0
 
@@ -391,6 +428,7 @@ Item {
 
             Text {
                 text: group.label
+                textFormat: Text.PlainText
                 font.pixelSize: group.fontSize
                 color: group.valueColor
             }
@@ -398,9 +436,15 @@ Item {
             Text {
                 visible: group.showValue
                 text: group.value
+                textFormat: Text.PlainText
                 width: group.valueWidth
                 horizontalAlignment: Text.AlignRight
                 font.pixelSize: group.fontSize
+                height: group.fitValue ? Math.ceil(balanceFont.height) : implicitHeight
+                verticalAlignment: Text.AlignVCenter
+                fontSizeMode: group.fitValue ? Text.HorizontalFit : Text.FixedSize
+                minimumPixelSize: 8
+                elide: group.fitValue ? Text.ElideRight : Text.ElideNone
                 color: group.valueColor
             }
         }

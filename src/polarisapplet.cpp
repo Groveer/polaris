@@ -68,6 +68,7 @@ QString usageText(quint64 usedKiB, quint64 totalKiB)
 PolarisApplet::PolarisApplet(QObject *parent)
     : DApplet(parent)
 {
+    connect(&m_balance, &polaris::BalanceMonitor::changed, this, &PolarisApplet::balanceChanged);
 }
 
 PolarisApplet::~PolarisApplet() = default;
@@ -123,6 +124,7 @@ void PolarisApplet::readSettings()
     const bool showNetwork = value(QStringLiteral("showNetwork"), true).toBool();
     const bool showPower = value(QStringLiteral("showPower"), false).toBool();
     const bool showFan = value(QStringLiteral("showFan"), false).toBool();
+    const bool showBalance = value(QStringLiteral("showBalance"), false).toBool();
     const int interval = qBound(kMinRefreshIntervalMs,
                                 value(QStringLiteral("refreshIntervalMs"), kDefaultRefreshIntervalMs).toInt(),
                                 kMaxRefreshIntervalMs);
@@ -141,7 +143,8 @@ void PolarisApplet::readSettings()
     const bool fanScaleDiffers = fanScale != m_fanScaleRpm;
     const bool settingsDiffer = showCpu != m_showCpu || showTemperature != m_showTemperature
             || showMemory != m_showMemory || showSwap != m_showSwap || showNetwork != m_showNetwork
-            || showPower != m_showPower || showFan != m_showFan || sort != m_processSort
+            || showPower != m_showPower || showFan != m_showFan || showBalance != m_showBalance
+            || sort != m_processSort
             || dockChartMode != m_dockChartMode || fanScaleDiffers;
     m_showCpu = showCpu;
     m_showTemperature = showTemperature;
@@ -150,6 +153,8 @@ void PolarisApplet::readSettings()
     m_showNetwork = showNetwork;
     m_showPower = showPower;
     m_showFan = showFan;
+    m_showBalance = showBalance;
+    m_balance.setEnabled(showBalance);
     m_processCount = processCount;
     m_dockChartMode = dockChartMode;
     m_fanScaleRpm = fanScale;

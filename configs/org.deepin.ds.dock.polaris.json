@@ -79,6 +79,17 @@
             "permissions": "readwrite",
             "visibility": "private"
         },
+        "showBalance": {
+            "value": false,
+            "serial": 0,
+            "flags": [],
+            "name": "API balance",
+            "name[zh_CN]": "API 余额",
+            "description": "Show the configured API platform balance on the taskbar",
+            "description[zh_CN]": "在任务栏上显示已配置平台的 API 余额",
+            "permissions": "readwrite",
+            "visibility": "private"
+        },
         "dockChartMode": {
             "value": "off",
             "serial": 0,

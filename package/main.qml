@@ -75,6 +75,8 @@ AppletItem {
         showNetwork: Applet.showNetwork
         showPower: Applet.showPower
         showFan: Applet.showFan
+        showBalance: Applet.showBalance
+        balance: Applet.balance
 
         darkTheme: root.darkTheme
         vertical: root.vertical

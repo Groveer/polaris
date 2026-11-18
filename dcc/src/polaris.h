@@ -30,6 +30,7 @@ class Polaris : public QObject
     Q_PROPERTY(bool showNetwork READ showNetwork NOTIFY showNetworkChanged)
     Q_PROPERTY(bool showPower READ showPower NOTIFY showPowerChanged)
     Q_PROPERTY(bool showFan READ showFan NOTIFY showFanChanged)
+    Q_PROPERTY(bool showBalance READ showBalance NOTIFY showBalanceChanged)
     Q_PROPERTY(QString dockChartMode READ dockChartMode NOTIFY dockChartModeChanged)
     Q_PROPERTY(int refreshIntervalMs READ refreshIntervalMs NOTIFY refreshIntervalMsChanged)
     Q_PROPERTY(int fanScaleRpm READ fanScaleRpm NOTIFY fanScaleRpmChanged)
@@ -46,6 +47,7 @@ public:
     bool showNetwork() const { return m_showNetwork; }
     bool showPower() const { return m_showPower; }
     bool showFan() const { return m_showFan; }
+    bool showBalance() const { return m_showBalance; }
     QString dockChartMode() const { return m_dockChartMode; }
     int refreshIntervalMs() const { return m_refreshIntervalMs; }
     int fanScaleRpm() const { return m_fanScaleRpm; }
@@ -59,6 +61,10 @@ public:
     Q_INVOKABLE void setShowNetwork(bool show);
     Q_INVOKABLE void setShowPower(bool show);
     Q_INVOKABLE void setShowFan(bool show);
+    Q_INVOKABLE void setShowBalance(bool show);
+    Q_INVOKABLE QVariantMap balanceConfig() const;
+    Q_INVOKABLE QVariantMap defaultBalanceConfig() const;
+    Q_INVOKABLE QString saveBalance(const QVariantMap &settings, const QString &key);
     /** Clamped to 500..10000 ms. */
     Q_INVOKABLE void setRefreshIntervalMs(int intervalMs);
     /** Clamped to 3..30. */
@@ -78,6 +84,7 @@ Q_SIGNALS:
     void showNetworkChanged(bool show);
     void showPowerChanged(bool show);
     void showFanChanged(bool show);
+    void showBalanceChanged(bool show);
     void dockChartModeChanged(const QString &mode);
     void refreshIntervalMsChanged(int intervalMs);
     void processCountChanged(int count);
@@ -109,6 +116,7 @@ private:
     bool m_showNetwork = true;
     bool m_showPower = false;
     bool m_showFan = false;
+    bool m_showBalance = false;
     QString m_dockChartMode = QStringLiteral("off");
     int m_refreshIntervalMs = 2000;
     int m_processCount = 8;

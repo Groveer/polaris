@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import org.deepin.dcc 1.0
 import org.deepin.dtk 1.0 as D
@@ -171,6 +172,181 @@ DccObject {
                 target: dccData
                 function onShowFanChanged() {
                     fanSwitch.checked = dccData.showFan
+                }
+            }
+        }
+    }
+
+    DccObject {
+        name: "showBalance"
+        parentName: "polaris"
+        displayName: qsTr("在任务栏显示 API 余额")
+        weight: 25
+        backgroundType: DccObject.Normal
+        pageType: DccObject.Editor
+        page: Switch {
+            checked: dccData.showBalance
+            onToggled: dccData.setShowBalance(checked)
+        }
+    }
+
+    DccObject {
+        name: "balanceSettings"
+        parentName: "polaris"
+        displayName: qsTr("余额查询平台")
+        weight: 29
+        backgroundType: DccObject.Normal
+        pageType: DccObject.Editor
+        page: Button {
+            id: settingsButton
+            text: qsTr("配置")
+            Accessible.name: qsTr("配置余额查询平台")
+            onClicked: editor.open()
+
+            Dialog {
+                id: editor
+                parent: settingsButton.Window.window ? settingsButton.Window.window.contentItem : settingsButton
+                anchors.centerIn: parent
+                width: Math.min(460, parent.width - 24)
+                modal: true
+                title: qsTr("余额查询平台")
+
+                property var saved: ({})
+                property string validationError: ""
+
+                function fill(config) {
+                    platformName.text = config.name
+                    endpoint.text = config.url
+                    auth.currentIndex = Math.max(0, auth.modes.indexOf(config.auth))
+                    fieldPath.text = config.path
+                    unit.text = config.unit
+                    minutes.value = config.minutes
+                    key.clear()
+                    validationError = ""
+                }
+
+                onAboutToShow: {
+                    saved = dccData.balanceConfig()
+                    const preset = dccData.defaultBalanceConfig()
+                    platform.currentIndex = saved.url === preset.url && saved.auth === preset.auth
+                            && saved.name === preset.name && saved.path === preset.path && saved.unit === preset.unit ? 0 : 1
+                    fill(saved)
+                }
+                onClosed: key.clear()
+
+                contentItem: ColumnLayout {
+                    spacing: 12
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 12
+                        rowSpacing: 8
+
+                        Label { text: qsTr("平台") }
+                        ComboBox {
+                            id: platform
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("平台")
+                            model: ["AIHub", qsTr("自定义 HTTPS 接口")]
+                            onActivated: index => {
+                                if (index === 0) {
+                                    const interval = minutes.value
+                                    editor.fill(dccData.defaultBalanceConfig())
+                                    minutes.value = interval
+                                }
+                            }
+                        }
+
+                        Label { text: qsTr("显示名称"); visible: platform.currentIndex === 1 }
+                        TextField {
+                            id: platformName
+                            visible: platform.currentIndex === 1
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("显示名称")
+                            maximumLength: 16
+                        }
+                        Label { text: qsTr("接口地址"); visible: platform.currentIndex === 1 }
+                        TextField {
+                            id: endpoint
+                            visible: platform.currentIndex === 1
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("接口地址")
+                            placeholderText: "https://example.com/v1/usage"
+                            onTextEdited: key.clear()
+                        }
+                        Label { text: qsTr("鉴权方式"); visible: platform.currentIndex === 1 }
+                        ComboBox {
+                            id: auth
+                            visible: platform.currentIndex === 1
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("鉴权方式")
+                            readonly property var modes: ["bearer", "x-api-key", "none"]
+                            model: ["Authorization: Bearer", "x-api-key", qsTr("无需鉴权")]
+                            onActivated: key.clear()
+                        }
+                        Label { text: qsTr("余额字段"); visible: platform.currentIndex === 1 }
+                        TextField {
+                            id: fieldPath
+                            visible: platform.currentIndex === 1
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("余额字段")
+                            placeholderText: "data.balance"
+                        }
+                        Label { text: qsTr("显示单位"); visible: platform.currentIndex === 1 }
+                        TextField {
+                            id: unit
+                            visible: platform.currentIndex === 1
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("显示单位")
+                            placeholderText: "USD"
+                            maximumLength: 8
+                        }
+                        Label { text: "API Key"; visible: key.visible }
+                        TextField {
+                            id: key
+                            visible: auth.currentIndex !== 2
+                            Layout.fillWidth: true
+                            Accessible.name: "API Key"
+                            echoMode: TextInput.Password
+                            inputMethodHints: Qt.ImhSensitiveData | Qt.ImhNoPredictiveText
+                            placeholderText: editor.saved.hasKey && editor.saved.url === endpoint.text.trim()
+                                             && editor.saved.auth === auth.modes[auth.currentIndex]
+                                             ? qsTr("已保存，留空保留") : qsTr("输入此平台的 API Key")
+                        }
+                        Label { text: qsTr("刷新间隔（分钟）") }
+                        SpinBox {
+                            id: minutes
+                            Accessible.name: qsTr("刷新间隔（分钟）")
+                            from: 5
+                            to: 60
+                            value: 5
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: text.length > 0
+                        text: editor.validationError
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                    }
+
+                    RowLayout {
+                        Layout.alignment: Qt.AlignRight
+                        Button { text: qsTr("取消"); onClicked: editor.reject() }
+                        Button {
+                            text: qsTr("保存")
+                            onClicked: {
+                                editor.validationError = dccData.saveBalance({
+                                    name: platformName.text, url: endpoint.text, auth: auth.modes[auth.currentIndex],
+                                    path: fieldPath.text, unit: unit.text, minutes: minutes.value
+                                }, key.text)
+                                if (!editor.validationError)
+                                    editor.accept()
+                            }
+                        }
+                    }
                 }
             }
         }

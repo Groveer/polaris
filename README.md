@@ -118,6 +118,7 @@ immediately, with no service in between.
 | `processSort` | `cpu` | Process list ordered by `cpu` or by `memory` |
 | `showPower` | `false` | Power draw on the dock item |
 | `showFan` | `false` | Highest fan speed on the dock item |
+| `showBalance` | `false` | Configured API platform's balance |
 | `fanScaleRpm` | `3000` | RPM the fan gauges treat as full speed, when the chip reports no ceiling |
 | `dockChartMode` | `off` | How the item draws its metrics: `off`, `both` or `line` |
 
@@ -126,6 +127,29 @@ The same values can be set from a shell:
 ```shell
 dde-dconfig set -a org.deepin.ds.dock.polaris -r org.deepin.ds.dock.polaris -k refreshIntervalMs -v 1000
 ```
+
+## API balance
+
+In **Control Center → System Monitor**, open **Balance platform** (`余额查询平台`).
+Select **AIHub**, enter the raw API Key (without `Bearer`), save, and enable
+**Show API balance on the taskbar** (`在任务栏显示 API 余额`). The widget fetches
+when enabled and then every 5 minutes by default. Change the interval to
+5–60 minutes independently of the local sensors. Click the taskbar item for
+usage totals, the last successful update, and a manual refresh button. A failed
+refresh leaves the previous amount visible but marks it as out of date.
+
+For another provider, select **Custom HTTPS endpoint**. Enter a display name,
+the full HTTPS `GET` URL, the authentication method (`Authorization: Bearer`,
+`x-api-key`, or none), and the balance field. For example, use `data.balance`
+for `{"data":{"balance":"3.97"}}`. A field can be a JSON number or a numeric
+string. The unit is a display label, not a conversion factor. AIHub-style
+`usage.today` and `usage.total` objects also populate the optional usage rows.
+
+Polaris monitors one provider at a time. The provider and key are saved in a
+user-owned `0600` file, `org.deepin.ds.dock.polaris/balance.json`, under
+`$XDG_CONFIG_HOME` (normally `~/.config`). The key is not stored in DConfig and
+is never forwarded through a redirect. Changing the URL or authentication
+method requires a new key for the destination, unless it needs no authentication.
 
 ## Network interfaces
 

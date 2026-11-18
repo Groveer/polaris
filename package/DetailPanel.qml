@@ -18,6 +18,7 @@ Item {
 
     required property var source
     required property var theme
+    readonly property var apiBalance: source.balance || ({})
 
     readonly property int fontSize: 13
 
@@ -477,6 +478,66 @@ Item {
                         theme: root.theme
                         lineColor: root.theme.fan
                         values: root.source.fanHistory
+                    }
+                }
+            }
+
+            Card {
+                theme: root.theme
+                visible: root.source.showBalance === true
+
+                Column {
+                    width: parent.width
+                    spacing: 8
+
+                    ValueRow {
+                        theme: root.theme
+                        label: qsTr("%1 余额").arg(root.apiBalance.name || "API")
+                        value: root.apiBalance.balance || "--"
+                    }
+
+                    Repeater {
+                        model: [
+                            [qsTr("今日实际费用"), root.apiBalance.todayCost],
+                            [qsTr("今日请求数"), root.apiBalance.todayRequests],
+                            [qsTr("今日 Token 数"), root.apiBalance.todayTokens],
+                            [qsTr("累计实际费用"), root.apiBalance.totalCost],
+                            [qsTr("累计请求数"), root.apiBalance.totalRequests],
+                            [qsTr("累计 Token 数"), root.apiBalance.totalTokens]
+                        ]
+                        delegate: ValueRow {
+                            required property var modelData
+                            theme: root.theme
+                            visible: !!modelData[1]
+                            label: modelData[0]
+                            value: modelData[1] || ""
+                        }
+                    }
+
+                    Text {
+                        width: parent.width
+                        visible: text.length > 0
+                        text: root.apiBalance.status || ""
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        font.pixelSize: root.fontSize - 1
+                        color: root.theme.dim
+                    }
+
+                    Text {
+                        width: parent.width
+                        visible: !!root.apiBalance.updated
+                        text: qsTr("上次更新：%1").arg(root.apiBalance.updated || "")
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        font.pixelSize: root.fontSize - 1
+                        color: root.theme.dim
+                    }
+
+                    Button {
+                        text: root.apiBalance.busy ? qsTr("正在刷新…") : qsTr("立即刷新")
+                        enabled: !!root.apiBalance.canRefresh && !root.apiBalance.busy
+                        onClicked: root.source.refreshBalance()
                     }
                 }
             }

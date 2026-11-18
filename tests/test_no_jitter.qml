@@ -179,6 +179,40 @@ Item {
         chartMode: "both"
     }
 
+    MonitorItem {
+        id: balanceLoading
+        dockSize: 38
+        chartMode: "line"
+        showBalance: true
+        balance: ({name: "AIHub", compact: "--"})
+    }
+
+    MonitorItem {
+        id: balanceLoaded
+        dockSize: 38
+        chartMode: "line"
+        showBalance: true
+        balance: ({name: "AIHub", compact: "$3.97", balance: "3.96948748 USD"})
+    }
+
+    MonitorItem {
+        id: verticalBalanceLoading
+        dockSize: 38
+        vertical: true
+        chartMode: "line"
+        showBalance: true
+        balance: balanceLoading.balance
+    }
+
+    MonitorItem {
+        id: verticalBalanceLoaded
+        dockSize: 38
+        vertical: true
+        chartMode: "line"
+        showBalance: true
+        balance: balanceLoaded.balance
+    }
+
     // Nothing may leave the process alive: ctest would wait for it forever.
     Timer {
         interval: 10000
@@ -213,6 +247,11 @@ Item {
                     "separators do not follow the visible metrics")
             check(!smallest.needsSeparator(0) && smallest.needsSeparator(1),
                     "the first visible metric draws a separator")
+            check(balanceLoading.implicitWidth === balanceLoaded.implicitWidth,
+                  "the taskbar widens when a balance replaces the placeholder")
+            check(verticalBalanceLoading.implicitHeight === verticalBalanceLoaded.implicitHeight
+                  && verticalBalanceLoaded.childrenRect.width <= verticalBalanceLoaded.implicitWidth,
+                  "the balance changes the vertical layout or overflows it")
 
             // Charts must be sized from their cells, never from their samples.
             check(chartSmallest.implicitWidth === chartLargest.implicitWidth,

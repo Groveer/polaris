@@ -11,7 +11,7 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX /usr)
 endif ()
 
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Network)
 find_package(DDEShell REQUIRED)
 find_package(Dtk6Core REQUIRED)
 find_package(Dtk6DConfig REQUIRED)
@@ -19,12 +19,16 @@ find_package(Dtk6DConfig REQUIRED)
 add_library(polaris SHARED
     src/polarisapplet.h
     src/polarisapplet.cpp
+    src/balanceconfig.cpp
+    src/balancemonitor.cpp
+    src/balancemonitor.h
     src/systemreader.h
 )
 
 target_link_libraries(polaris PRIVATE
     Dde::Shell
     Qt6::Core
+    Qt6::Network
     Dtk6::Core
 )
 

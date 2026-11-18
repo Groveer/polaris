@@ -3,6 +3,7 @@
 #pragma once
 
 #include "applet.h"
+#include "balancemonitor.h"
 #include "dsglobal.h"
 #include "systemreader.h"
 
@@ -51,6 +52,8 @@ class PolarisApplet : public DApplet
     Q_PROPERTY(bool showNetwork READ showNetwork NOTIFY settingsChanged FINAL)
     Q_PROPERTY(bool showPower READ showPower NOTIFY settingsChanged FINAL)
     Q_PROPERTY(bool showFan READ showFan NOTIFY settingsChanged FINAL)
+    Q_PROPERTY(bool showBalance READ showBalance NOTIFY settingsChanged FINAL)
+    Q_PROPERTY(QVariantMap balance READ balance NOTIFY balanceChanged FINAL)
     // How the dock item draws its metrics: "off", "both" or "line". The history
     // it draws comes from the same per-metric switches as the numbers.
     Q_PROPERTY(QString dockChartMode READ dockChartMode NOTIFY settingsChanged FINAL)
@@ -123,6 +126,9 @@ public:
     bool showNetwork() const { return m_showNetwork; }
     bool showPower() const { return m_showPower; }
     bool showFan() const { return m_showFan; }
+    bool showBalance() const { return m_showBalance; }
+    QVariantMap balance() const { return m_balance.data(); }
+    Q_INVOKABLE void refreshBalance() { m_balance.refresh(); }
     QVariantList processes() const { return m_processes; }
     QString processSort() const { return m_processSort; }
 
@@ -177,6 +183,7 @@ Q_SIGNALS:
     void dataChanged();
     void settingsChanged();
     void processesChanged();
+    void balanceChanged();
 
 private:
     /// One sample: reads everything the dock item and the detail panel show.
@@ -191,6 +198,8 @@ private:
     void refreshProcesses(quint64 totalTicksDelta);
     void readSettings();
 
+    polaris::BalanceMonitor m_balance;
+    bool m_showBalance = false;
     QTimer m_timer;
     QElapsedTimer m_netClock;
     Dtk::Core::DConfig *m_config = nullptr;

@@ -25,5 +25,7 @@ polaris (1.0.0) unstable; urgency=medium
   * Clicking the item opens a detail panel: cpu breakdown, per-core bars,
     memory split, transfer history charts and the busiest processes, in its own
     layer-shell window that follows the light or dark theme.
+  * Optional API balance on the taskbar, with an AIHub preset, configurable
+    HTTPS JSON endpoints, and a separate five-minute default refresh interval.
 
  -- Deepin Packages Builder <packages@deepin.com>  Mon, 02 Mar 2026 10:00:00 +0800
